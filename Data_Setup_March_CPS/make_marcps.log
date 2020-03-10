@@ -1,0 +1,2497 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  H:\Other\Paper Codes for Uploading\drug-testing\Data_Setup_March_CPS\make_marcps.log
+  log type:  text
+ opened on:   5 Mar 2020, 11:27:07
+
+. /****
+> 
+> Cleans raw March CPS data extracted from IPUMS.
+> 
+> Creates marcps.dta and marcps_test.dta for use in analysis for drug testing paper.
+> Merges state and msa-level data from DRUGDATA_FINALv2.dta.
+> 
+> Extended data through 2010 per reviewer comments. Note that don't have data on some state and msa-level controls for 2007 and beyond.
+> 
+> ****/
+> 
+> set more off ;
+
+. set mem 1g ;
+set memory ignored.
+    Memory no longer needs to be set in modern Statas; memory adjustments are performed on the fly automatically.
+
+. /** Make state and msa level datasets for merging from DRUGDATA_FINAL. **/
+> 
+> *use DRUGDATA_FINALv2.dta ;
+. use Input\DRUGDATA_FINALv2.dta ;
+
+. * state incarceration rate as share of laborforce ;
+. gen incarcr = inmates_total_ / laborforce ;
+(1,304 missing values generated)
+
+.  summ incarcr laborforce inmates_total_ ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+     incarcr |     68,605    .0076111    .0040331   .0006177   .0353081
+  laborforce |     68,666     4116195     3936198     163758   1.83e+07
+inmates_to~_ |     68,605    35816.08    44267.13        186     175512
+
+. * This is MSA level ;
+. gen pcarrests = Adrugtot / cpopo ;
+(13,546 missing values generated)
+
+. sort statefips year ;
+
+. collapse (mean) minwage unemploymentrate incarcr (sd) sdmw=minwage sdur=unemploymentrate sdir=incarcr, by(statefips year) ;
+
+. summ ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |      2,210    1989.031    12.37705       1968       2010
+   statefips |      2,193    28.96078    15.68041          1         56
+     minwage |      2,193    3.866703    1.641054        1.6       8.55
+unemployme~e |      1,785     6.00112    2.077409        2.3       17.4
+     incarcr |      1,724    .0062801    .0042255   .0006177   .0353081
+-------------+---------------------------------------------------------
+        sdmw |        822           0           0          0          0
+        sdur |        822           0           0          0          0
+        sdir |        822           0           0          0          0
+
+. drop sd* ;
+
+. *drop if year < 1980 | year > 1999 ;
+. *drop if year < 1980 | year > 2006 ;
+. drop if year < 1980 ;
+(612 observations deleted)
+
+. summ ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |      1,598    1994.979    8.916059       1980       2010
+   statefips |      1,581    28.96078     15.6818          1         56
+     minwage |      1,581    4.625231    1.264881        3.1       8.55
+unemployme~e |      1,581    5.975522    2.121428        2.3       17.4
+     incarcr |      1,571    .0066269    .0042458   .0006989   .0353081
+
+. /* Note that incarceration data is missing for DC for some years */
+> tab1 year if incarcr==. ;
+
+-> tabulation of year if incarcr==. 
+
+       year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       1985 |          1        3.70        3.70
+       1986 |          1        3.70        7.41
+       1987 |          1        3.70       11.11
+       1988 |          1        3.70       14.81
+       1989 |          1        3.70       18.52
+       1990 |          1        3.70       22.22
+       1991 |          1        3.70       25.93
+       1992 |          1        3.70       29.63
+       1993 |          1        3.70       33.33
+       1994 |          1        3.70       37.04
+       1995 |          1        3.70       40.74
+       1996 |          1        3.70       44.44
+       1997 |          1        3.70       48.15
+       1998 |          1        3.70       51.85
+       1999 |          1        3.70       55.56
+       2000 |          1        3.70       59.26
+       2001 |          2        7.41       66.67
+       2002 |          1        3.70       70.37
+       2003 |          1        3.70       74.07
+       2004 |          1        3.70       77.78
+       2005 |          1        3.70       81.48
+       2006 |          1        3.70       85.19
+       2007 |          1        3.70       88.89
+       2008 |          1        3.70       92.59
+       2009 |          1        3.70       96.30
+       2010 |          1        3.70      100.00
+------------+-----------------------------------
+      Total |         27      100.00
+
+. tempfile tempstate ;
+
+. rename statefips statefip ;
+
+. sort statefip year ;
+
+. save `tempstate' ;
+file C:\Users\IRZJS01\AppData\Local\Temp\ST_4164_000001.tmp saved
+
+. clear ;
+
+. *use DRUGDATA_FINALv2.dta ;
+. use Input\DRUGDATA_FINALv2.dta ;
+
+. * This is MSA level ;
+. gen pcarrests = Adrugtot / cpopo ;
+(13,546 missing values generated)
+
+. sort msa year ;
+
+. collapse (mean) pcarrests (sd) sdpc=pcarrests, by(msa year) ;
+
+. summ ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |      4,954    1993.186    5.031037       1968       2010
+         msa |      4,911    4413.938    2647.523         40       9360
+   pcarrests |      4,676    .0035925     .002378          0   .0202928
+        sdpc |      1,199           0           0          0          0
+
+. drop sd* ;
+
+. *drop if year < 1980 | year > 1999 ;
+. *drop if year < 1980 | year > 2006 ;
+. drop if year < 1980 ;
+(12 observations deleted)
+
+. summ ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |      4,942    1993.234    4.939671       1980       2010
+         msa |      4,911    4413.938    2647.523         40       9360
+   pcarrests |      4,676    .0035925     .002378          0   .0202928
+
+. tempfile tempmsa ;
+
+. sort msa year ;
+
+. save `tempmsa' ;
+file C:\Users\IRZJS01\AppData\Local\Temp\ST_4164_000002.tmp saved
+
+. clear ;
+
+. /** Begin cleaning of CPS microdata **/
+> 
+> ** Put updated IPUMS filename here ;
+. cd ..\Raw_CPS_Data\. ;
+H:\Other\Paper Codes for Uploading\drug-testing\Raw_CPS_Data
+
+. *quietly do cps_00012.do ;
+. quietly do cps_00012.do ;
+
+. cd ..\Data_Setup_March_CPS\. ;
+H:\Other\Paper Codes for Uploading\drug-testing\Data_Setup_March_CPS
+
+. *restrict to working ages and 1980-2006 ;
+. drop if age < 18 | age > 55 ;
+(0 observations deleted)
+
+. *drop if year < 1980 | year > 2006 ;
+. drop if year < 1980 ;
+(0 observations deleted)
+
+. summ age year ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         age |  2,794,447     35.7793    10.53835         18         55
+        year |  2,794,447    1995.838    9.249282       1980       2010
+
+. tab1 year ;
+
+-> tabulation of year  
+
+Survey year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       1980 |     92,993        3.33        3.33
+       1981 |     93,607        3.35        6.68
+       1982 |     84,160        3.01        9.69
+       1983 |     84,687        3.03       12.72
+       1984 |     84,282        3.02       15.74
+       1985 |     84,487        3.02       18.76
+       1986 |     82,515        2.95       21.71
+       1987 |     81,686        2.92       24.64
+       1988 |     81,874        2.93       27.57
+       1989 |     76,023        2.72       30.29
+       1990 |     83,725        3.00       33.28
+       1991 |     83,746        3.00       36.28
+       1992 |     82,738        2.96       39.24
+       1993 |     82,067        2.94       42.18
+       1994 |     79,288        2.84       45.01
+       1995 |     79,067        2.83       47.84
+       1996 |     68,809        2.46       50.31
+       1997 |     69,746        2.50       52.80
+       1998 |     69,780        2.50       55.30
+       1999 |     70,290        2.52       57.81
+       2000 |     71,256        2.55       60.36
+       2001 |    115,768        4.14       64.51
+       2002 |    115,113        4.12       68.63
+       2003 |    114,447        4.10       72.72
+       2004 |    112,229        4.02       76.74
+       2005 |    110,128        3.94       80.68
+       2006 |    109,017        3.90       84.58
+       2007 |    107,474        3.85       88.43
+       2008 |    106,978        3.83       92.25
+       2009 |    107,698        3.85       96.11
+       2010 |    108,769        3.89      100.00
+------------+-----------------------------------
+      Total |  2,794,447      100.00
+
+. * employment variables ;
+. gen empd=. ;
+(2,794,447 missing values generated)
+
+. replace empd=1 if empstat>=10 & empstat<=13 ;
+(2,100,802 real changes made)
+
+. replace empd=0 if empstat>=20 & empstat<=35 ;
+(692,960 real changes made)
+
+. tab1 empd  ;
+
+-> tabulation of empd  
+
+       empd |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |    692,960       24.80       24.80
+          1 |  2,100,802       75.20      100.00
+------------+-----------------------------------
+      Total |  2,793,762      100.00
+
+. summ empstat if empd==. ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+     empstat |        685           0           0          0          0
+
+. gen unempd=. ;
+(2,794,447 missing values generated)
+
+. replace unempd=1 if empstat>=20 & empstat<=22 ;
+(143,075 real changes made)
+
+. replace unempd=0 if empstat>=10 & empstat<=13 | empstat>=30 & empstat<=35 ;
+(2,650,687 real changes made)
+
+. tab1 unempd ;
+
+-> tabulation of unempd  
+
+     unempd |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  2,650,687       94.88       94.88
+          1 |    143,075        5.12      100.00
+------------+-----------------------------------
+      Total |  2,793,762      100.00
+
+. summ empstat if unempd==. ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+     empstat |        685           0           0          0          0
+
+. * insurance coverage ;
+. tab1 inclugh paidgh ;
+
+-> tabulation of inclugh  
+
+Included in |
+   employer |
+      group |
+health plan |
+  last year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+        NIU |  1,204,027       43.09       43.09
+         No |    341,215       12.21       55.30
+        Yes |  1,249,205       44.70      100.00
+------------+-----------------------------------
+      Total |  2,794,447      100.00
+
+-> tabulation of paidgh  
+
+ Employer paid for |
+ group health plan |      Freq.     Percent        Cum.
+-------------------+-----------------------------------
+               NIU |  1,520,821       54.42       54.42
+                No |     65,855        2.36       56.78
+               Yes |     76,558        2.74       59.52
+Yes, paid for part |    764,509       27.36       86.88
+ Yes, paid for all |    366,704       13.12      100.00
+-------------------+-----------------------------------
+             Total |  2,794,447      100.00
+
+. ** see ipums documentation on inclugh to understand recoding ;
+. ** have to adjust universes to be the same across years, at a minimum ;
+. gen inclughr=inclugh ;
+
+. replace inclughr=. if inclughr==0 ;
+(1,204,027 real changes made, 1,204,027 to missing)
+
+. replace inclughr=0 if inclughr==1 ;
+(341,215 real changes made)
+
+. replace inclughr=1 if inclughr==2 ;
+(1,249,205 real changes made)
+
+. replace inclughr=0 if wkswork1>0 & year>=1988 & inclughr==. ;
+(755,586 real changes made)
+
+. replace inclughr=. if wkswork1==0 & year>=1988 ;
+(29,380 real changes made, 29,380 to missing)
+
+. replace inclughr=. if wkswork1==. & year>=1988 ;
+(0 real changes made)
+
+. tab1 inclughr  ;
+
+-> tabulation of inclughr  
+
+   inclughr |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  1,081,934       46.70       46.70
+          1 |  1,234,692       53.30      100.00
+------------+-----------------------------------
+      Total |  2,316,626      100.00
+
+. * part time work ;
+. gen ptweeksr=ptweeks ;
+
+. replace ptweeksr=. if ptweeks==0 ;
+(2,126,665 real changes made, 2,126,665 to missing)
+
+. replace ptweeksr=0 if wkswork1>0 & ptweeksr==. ;
+(1,648,844 real changes made)
+
+. tab1 ptweeksr ;
+
+-> tabulation of ptweeksr  
+
+   ptweeksr |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  1,648,844       71.17       71.17
+          1 |     27,621        1.19       72.37
+          2 |     42,997        1.86       74.22
+          3 |     31,348        1.35       75.58
+          4 |     40,381        1.74       77.32
+          5 |     19,862        0.86       78.18
+          6 |     22,398        0.97       79.14
+          7 |      5,126        0.22       79.36
+          8 |     26,346        1.14       80.50
+          9 |      4,800        0.21       80.71
+         10 |     27,497        1.19       81.90
+         11 |      1,941        0.08       81.98
+         12 |     28,904        1.25       83.23
+         13 |      8,829        0.38       83.61
+         14 |      4,379        0.19       83.80
+         15 |      9,145        0.39       84.19
+         16 |     13,340        0.58       84.77
+         17 |      5,256        0.23       84.99
+         18 |      4,360        0.19       85.18
+         19 |      1,428        0.06       85.24
+         20 |     22,674        0.98       86.22
+         21 |      2,549        0.11       86.33
+         22 |      5,108        0.22       86.55
+         23 |      1,782        0.08       86.63
+         24 |      7,286        0.31       86.95
+         25 |      7,828        0.34       87.28
+         26 |     26,099        1.13       88.41
+         27 |      7,898        0.34       88.75
+         28 |      3,984        0.17       88.92
+         29 |        626        0.03       88.95
+         30 |     13,998        0.60       89.55
+         31 |        535        0.02       89.58
+         32 |      6,327        0.27       89.85
+         33 |        921        0.04       89.89
+         34 |      1,993        0.09       89.98
+         35 |      5,979        0.26       90.23
+         36 |      8,436        0.36       90.60
+         37 |      1,386        0.06       90.66
+         38 |      2,890        0.12       90.78
+         39 |      5,393        0.23       91.02
+         40 |     21,227        0.92       91.93
+         41 |        612        0.03       91.96
+         42 |      3,707        0.16       92.12
+         43 |      1,948        0.08       92.20
+         44 |      4,284        0.18       92.39
+         45 |      4,877        0.21       92.60
+         46 |      2,979        0.13       92.73
+         47 |      1,451        0.06       92.79
+         48 |      8,606        0.37       93.16
+         49 |      2,409        0.10       93.26
+         50 |     10,502        0.45       93.72
+         51 |      2,629        0.11       93.83
+         52 |    142,901        6.17      100.00
+------------+-----------------------------------
+      Total |  2,316,626      100.00
+
+. * pension coverage ;
+. gen pensionr=pension ;
+
+. replace pensionr=. if pension==0 ;
+(477,823 real changes made, 477,823 to missing)
+
+. replace pensionr=1 if pension==2 | pension==3 ;
+(1,223,134 real changes made)
+
+. replace pensionr=0 if pension==1 ;
+(1,093,490 real changes made)
+
+. tab1 pensionr ;
+
+-> tabulation of pensionr  
+
+   pensionr |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  1,093,490       47.20       47.20
+          1 |  1,223,134       52.80      100.00
+------------+-----------------------------------
+      Total |  2,316,624      100.00
+
+. * industry groups ;
+. gen ind1=. ;
+(2,794,447 missing values generated)
+
+. replace ind1=1 if ind1950>=206 & ind1950<=236 ;
+(17,753 real changes made)
+
+.  * Mining ;
+. replace ind1=2 if ind1950==246 ;
+(163,274 real changes made)
+
+.   * Construction ;
+. replace ind1=3 if ind1950>=306 & ind1950<=499 ;
+(356,578 real changes made)
+
+.  * Mfg ;
+. replace ind1=4 if ind1950>=578 & ind1950<=598 ;
+(49,070 real changes made)
+
+.  * Communications, utilities ;
+. replace ind1=5 if ind1950>=506 & ind1950<=568 ;
+(79,018 real changes made)
+
+.  * Transportation ;
+. replace ind1=6 if ind1950>=606 & ind1950<=627 ;
+(78,008 real changes made)
+
+.  * Wholesale trade ;
+. replace ind1=7 if ind1950>=636 & ind1950<=699 ;
+(380,367 real changes made)
+
+.  * Retail trade ;
+. replace ind1=8 if ind1950>=716 & ind1950<=746 ;
+(142,957 real changes made)
+
+.  * FIRE ;
+. replace ind1=9 if ind1950>=806 & ind1950<=899 ;
+(810,582 real changes made)
+
+.  * Services ;
+. replace ind1=10 if ind1950>=105 & ind1950<=126 ;
+(62,211 real changes made)
+
+.  * Ag ;
+. replace ind1=11 if ind1950>=906 & ind1950<=936 ;
+(120,346 real changes made)
+
+.  * Govt ;
+. * the universe for industry is people who worked 5 or fewer years ago ;
+. * limit to those who worked recently ;
+. replace ind1=. if wkswork1==0 & empd==0 ;
+(41,226 real changes made, 41,226 to missing)
+
+. replace ind1=. if wkswork1==. & empd==0 ;
+(0 real changes made)
+
+. tab1 ind1 ;
+
+-> tabulation of ind1  
+
+       ind1 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |     17,480        0.79        0.79
+          2 |    160,141        7.22        8.00
+          3 |    349,601       15.76       23.76
+          4 |     48,598        2.19       25.95
+          5 |     77,884        3.51       29.46
+          6 |     77,033        3.47       32.93
+          7 |    370,038       16.68       49.61
+          8 |    141,193        6.36       55.97
+          9 |    797,052       35.92       91.89
+         10 |     60,988        2.75       94.64
+         11 |    118,930        5.36      100.00
+------------+-----------------------------------
+      Total |  2,218,938      100.00
+
+. gen agegrp3=. ;
+(2,794,447 missing values generated)
+
+. replace agegrp3=1 if age>=18 & age<25 ;
+(514,738 real changes made)
+
+. replace agegrp3=2 if age>=25 & age < 35 ;
+(791,585 real changes made)
+
+. replace agegrp3=3 if age>=35 ;
+(1,488,124 real changes made)
+
+. tab1 agegrp3 ;
+
+-> tabulation of agegrp3  
+
+    agegrp3 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |    514,738       18.42       18.42
+          2 |    791,585       28.33       46.75
+          3 |  1,488,124       53.25      100.00
+------------+-----------------------------------
+      Total |  2,794,447      100.00
+
+. gen female=(sex==2) ;
+
+. tab1 female ;
+
+-> tabulation of female  
+
+     female |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  1,348,452       48.25       48.25
+          1 |  1,445,995       51.75      100.00
+------------+-----------------------------------
+      Total |  2,794,447      100.00
+
+. gen black=(race==200) ;
+
+. gen other=(race > 200) ;
+
+. gen hisp=(hispan>=100 & hispan<=410 & black==0) ;
+
+. tab1 black hisp other ;
+
+-> tabulation of black  
+
+      black |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  2,508,564       89.77       89.77
+          1 |    285,883       10.23      100.00
+------------+-----------------------------------
+      Total |  2,794,447      100.00
+
+-> tabulation of hisp  
+
+       hisp |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  2,421,380       86.65       86.65
+          1 |    373,067       13.35      100.00
+------------+-----------------------------------
+      Total |  2,794,447      100.00
+
+-> tabulation of other  
+
+      other |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  2,628,250       94.05       94.05
+          1 |    166,197        5.95      100.00
+------------+-----------------------------------
+      Total |  2,794,447      100.00
+
+. /* 
+> * Old education coding ;
+> gen edgrp4=. ;
+> replace edgrp4=1 if educrec>=1 & educrec<=6 ;
+> replace edgrp4=2 if educrec==7 ;
+> replace edgrp4=3 if educrec==8 ;
+> replace edgrp4=4 if educrec==9 ;
+> tab1 edgrp4 ;
+> */
+> 
+> gen edgrp4=. ;
+(2,794,447 missing values generated)
+
+. replace edgrp4=1 if educ>=2 & educ<=72 ;
+(817,431 real changes made)
+
+. replace edgrp4=2 if educ==73 ;
+(602,956 real changes made)
+
+. replace edgrp4=3 if educ>=80 & educ<=100 ;
+(733,062 real changes made)
+
+. replace edgrp4=4 if educ>=110 ;
+(640,998 real changes made)
+
+. tab1 edgrp4 ;
+
+-> tabulation of edgrp4  
+
+     edgrp4 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |    817,431       29.25       29.25
+          2 |    602,956       21.58       50.83
+          3 |    733,062       26.23       77.06
+          4 |    640,998       22.94      100.00
+------------+-----------------------------------
+      Total |  2,794,447      100.00
+
+. tab1 educ if edgrp4==. ;
+
+-> tabulation of educ if edgrp4==. 
+no observations
+
+. * Firm size ;
+. gen firmsizer=firmsize ;
+(688,417 missing values generated)
+
+. replace firmsizer=. if firmsize==0 ;
+(348,973 real changes made, 348,973 to missing)
+
+. replace firmsizer=1 if inlist(firmsize,1,2,3)==1 ;
+(224,520 real changes made)
+
+.   * Under 25 ;
+. replace firmsizer=2 if firmsize == 4 ;
+(231,440 real changes made)
+
+.  *25-99 ;
+. replace firmsizer=3 if firmsize == 5 ;
+(242,983 real changes made)
+
+.  *100-499 ;
+. replace firmsizer=4 if firmsize == 6 | firmsize==7 ;
+(766,021 real changes made)
+
+.   * 500 and up ;
+. tab1 firmsize firmsizer ;
+
+-> tabulation of firmsize  
+
+  Number of |
+  employees |      Freq.     Percent        Cum.
+------------+-----------------------------------
+        NIU |    348,973       16.57       16.57
+   Under 10 |    292,093       13.87       30.44
+   10 to 24 |    143,200        6.80       37.24
+   Under 25 |     81,320        3.86       41.10
+   25 to 99 |    231,440       10.99       52.09
+ 100 to 499 |    242,983       11.54       63.63
+ 500 to 999 |     97,193        4.61       68.24
+      1000+ |    668,828       31.76      100.00
+------------+-----------------------------------
+      Total |  2,106,030      100.00
+
+-> tabulation of firmsizer  
+
+  firmsizer |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |    516,613       29.40       29.40
+          2 |    231,440       13.17       42.57
+          3 |    242,983       13.83       56.40
+          4 |    766,021       43.60      100.00
+------------+-----------------------------------
+      Total |  1,757,057      100.00
+
+. *replace perwt=int(perwt) ;
+. summ wtsupp ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      wtsupp |  2,794,447    1557.981    938.9647          0   18656.26
+
+. replace wtsupp=int(wtsupp) ;
+(2,763,228 real changes made)
+
+. **Add weekly wages calculation - need to account for changes in topcoding of income, esp after redesign. ;
+. sort year ;
+
+. *merge m:1 year using cpi1990.dta ;
+. *merge m:1 year using cpiu2000.dta ;
+. merge m:1 year using Input\cpiu2000.dta ;
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                            13
+        from master                         0  (_merge==1)
+        from using                         13  (_merge==2)
+
+    matched                         2,794,447  (_merge==3)
+    -----------------------------------------
+
+. tab1 _merge ;
+
+-> tabulation of _merge  
+
+                 _merge |      Freq.     Percent        Cum.
+------------------------+-----------------------------------
+         using only (2) |         13        0.00        0.00
+            matched (3) |  2,794,447      100.00      100.00
+------------------------+-----------------------------------
+                  Total |  2,794,460      100.00
+
+. tab1 year statefip if _merge==1 ;
+
+-> tabulation of year if _merge==1 
+no observations
+
+-> tabulation of statefip if _merge==1 
+no observations
+
+. drop if _merge < 3 ;
+(13 observations deleted)
+
+. drop _merge ;
+
+. replace wkswork1=. if wkswork1<0 ;
+(0 real changes made)
+
+. *replace hrswork=. if hrswork< 0 ;
+. replace uhrswork=. if uhrswork<0 ;
+(0 real changes made)
+
+. replace incwage=. if incwage<0 ;
+(0 real changes made)
+
+. gen wwage=incwage/(wkswork1) ;
+(477,821 missing values generated)
+
+. replace wwage=. if incwage==. | wkswork1==. ;
+(0 real changes made)
+
+. gen hwage=incwage/(uhrswork*wkswork1) ;
+(477,821 missing values generated)
+
+. replace hwage=. if incwage==. | wkswork1==. | uhrswork==. ;
+(0 real changes made)
+
+. * real weekly wages in 1990 dollars ;
+. gen rwwage = wwage/defl ;
+(477,821 missing values generated)
+
+. gen rhwage = hwage/defl ;
+(477,821 missing values generated)
+
+. summ wwage rwwage hwage rhwage if year==1989 ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+       wwage |     64,219    375.6614    345.8848          0      25000
+      rwwage |     64,219    521.8587     480.494          0   34729.33
+       hwage |     64,219    9.372773    8.434256          0        500
+      rhwage |     64,219    13.02041    11.71664          0   694.5866
+
+. summ wwage rwwage hwage rhwage if year==1990 ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+       wwage |     71,197    399.3286     368.433          0      19500
+      rwwage |     71,197    526.2486    485.5333          0   25697.75
+       hwage |     71,197    9.957167    10.94899          0   1666.667
+      rhwage |     71,197    13.12189    14.42894          0   2196.389
+
+. summ wwage rwwage hwage rhwage if year==1991 ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+       wwage |     70,857    410.8772     396.465          0      43000
+      rwwage |     70,857    519.4374    501.2173          0   54361.27
+       hwage |     70,857    10.31399      14.693          0   1923.058
+      rhwage |     70,857    13.03911    18.57513          0    2431.16
+
+. summ wwage hwage ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+       wwage |  2,316,626    536.5867    880.4236          0     406934
+       hwage |  2,316,626    13.84381     278.126          0     403543
+
+. drop wwage hwage ;
+
+. _pctile rwwage if rwwage>0 [pw=wtsupp], percentiles(3 97) ;
+
+. display r(r1) ;
+64.396469
+
+. display r(r2) ;
+1817.8958
+
+. gen wwagesamp=1 ;
+
+. replace wwagesamp=0 if rwwage<r(r1) | rwwage>r(r2) | rwwage==. ;
+(746,929 real changes made)
+
+. summ rwwage if wwagesamp==1 ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      rwwage |  2,047,518    552.5702    355.8497   64.39647   1817.896
+
+. _pctile rhwage if rhwage>0 [pw=wtsupp], percentiles(3 97) ;
+
+. display r(r1) ;
+2.7977316
+
+. display r(r2) ;
+41.666668
+
+. gen hwagesamp=1 ;
+
+. replace hwagesamp=0 if rhwage<r(r1) | rhwage>r(r2) | rhwage==. ;
+(746,733 real changes made)
+
+. summ rhwage if hwagesamp==1 ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      rhwage |  2,047,714     13.8243    7.888285   2.797732   41.66667
+
+. /** Merge in state and MSA level drug related covariates and DTI **/
+> 
+> sort statefip year ;
+
+. *merge m:1 statefip year using "statedtindex.dta", keepusing(dti8893 size_index8893 ind_index8893 histate yranti yrpro) ;
+. merge m:1 statefip year using Input\statedtindex.dta, keepusing(dti8893 size_index8893 ind_index8893 histate yranti yrpro) ;
+(note: variable year was int, now float to accommodate using data's values)
+(note: variable statefip was byte, now float to accommodate using data's values)
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                       430,919
+        from master                   430,919  (_merge==1)
+        from using                          0  (_merge==2)
+
+    matched                         2,363,528  (_merge==3)
+    -----------------------------------------
+
+. tab1 year statefip if _merge==1 ;
+
+-> tabulation of year if _merge==1 
+
+Survey year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2007 |    107,474       24.94       24.94
+       2008 |    106,978       24.83       49.77
+       2009 |    107,698       24.99       74.76
+       2010 |    108,769       25.24      100.00
+------------+-----------------------------------
+      Total |    430,919      100.00
+
+-> tabulation of statefip if _merge==1 
+
+                      State (FIPS code) |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                                Alabama |      4,463        1.04        1.04
+                                 Alaska |      5,989        1.39        2.43
+                                Arizona |      5,708        1.32        3.75
+                               Arkansas |      4,341        1.01        4.76
+                             California |     42,443        9.85       14.61
+                               Colorado |      9,335        2.17       16.77
+                            Connecticut |      9,263        2.15       18.92
+                               Delaware |      6,399        1.48       20.41
+                   District of Columbia |      5,967        1.38       21.79
+                                Florida |     16,955        3.93       25.73
+                                Georgia |      9,927        2.30       28.03
+                                 Hawaii |      7,354        1.71       29.74
+                                  Idaho |      4,843        1.12       30.86
+                               Illinois |     13,709        3.18       34.04
+                                Indiana |      6,210        1.44       35.48
+                                   Iowa |      7,758        1.80       37.28
+                                 Kansas |      5,962        1.38       38.67
+                               Kentucky |      5,942        1.38       40.05
+                              Louisiana |      3,784        0.88       40.92
+                                  Maine |      7,295        1.69       42.62
+                               Maryland |     10,328        2.40       45.01
+                          Massachusetts |      6,466        1.50       46.51
+                               Michigan |     10,102        2.34       48.86
+                              Minnesota |      9,943        2.31       51.17
+                            Mississippi |      3,825        0.89       52.05
+                               Missouri |      6,791        1.58       53.63
+                                Montana |      3,805        0.88       54.51
+                               Nebraska |      6,182        1.43       55.95
+                                 Nevada |      6,894        1.60       57.55
+                          New Hampshire |      8,596        1.99       59.54
+                             New Jersey |      9,598        2.23       61.77
+                             New Mexico |      4,328        1.00       62.77
+                               New York |     18,707        4.34       67.12
+                         North Carolina |      8,302        1.93       69.04
+                           North Dakota |      5,040        1.17       70.21
+                                   Ohio |     11,313        2.63       72.84
+                               Oklahoma |      5,189        1.20       74.04
+                                 Oregon |      5,800        1.35       75.39
+                           Pennsylvania |     12,171        2.82       78.21
+                           Rhode Island |      6,764        1.57       79.78
+                         South Carolina |      5,555        1.29       81.07
+                           South Dakota |      6,103        1.42       82.49
+                              Tennessee |      5,580        1.29       83.78
+                                  Texas |     24,808        5.76       89.54
+                                   Utah |      5,488        1.27       90.81
+                                Vermont |      5,394        1.25       92.06
+                               Virginia |      9,345        2.17       94.23
+                             Washington |      7,472        1.73       95.97
+                          West Virginia |      4,377        1.02       96.98
+                              Wisconsin |      7,895        1.83       98.81
+                                Wyoming |      5,111        1.19      100.00
+----------------------------------------+-----------------------------------
+                                  Total |    430,919      100.00
+
+. drop _merge ;
+
+. merge m:1 statefip year using `tempstate' ;
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                            18
+        from master                         0  (_merge==1)
+        from using                         18  (_merge==2)
+
+    matched                         2,794,447  (_merge==3)
+    -----------------------------------------
+
+. tab1 statefip if _merge==2 ;
+
+-> tabulation of statefip if _merge==2 
+no observations
+
+. tab1 year if _merge==2 ;
+
+-> tabulation of year if _merge==2 
+
+Survey year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       1985 |          1        5.88        5.88
+       1986 |          1        5.88       11.76
+       1987 |          1        5.88       17.65
+       1988 |          1        5.88       23.53
+       1989 |          1        5.88       29.41
+       1990 |          1        5.88       35.29
+       1991 |          1        5.88       41.18
+       1992 |          1        5.88       47.06
+       1993 |          1        5.88       52.94
+       1994 |          1        5.88       58.82
+       1995 |          1        5.88       64.71
+       1996 |          1        5.88       70.59
+       1997 |          1        5.88       76.47
+       1998 |          1        5.88       82.35
+       1999 |          1        5.88       88.24
+       2000 |          1        5.88       94.12
+       2001 |          1        5.88      100.00
+------------+-----------------------------------
+      Total |         17      100.00
+
+. tab1 year if _merge==1 ;
+
+-> tabulation of year if _merge==1 
+no observations
+
+. drop if _merge==2 ;
+(18 observations deleted)
+
+. drop _merge ;
+
+. * Update since state DT data only goes through 2006. ;
+. bysort statefip: egen mhistate=max(histate) ;
+
+. bysort statefip: egen myranti=max(yranti) ;
+
+. bysort statefip: egen myrpro=max(yrpro) ;
+
+. summ year yrpro yranti histate ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |  2,794,447    1995.838    9.249282       1980       2010
+       yrpro |  2,363,528    466.2608    845.3165          0       2003
+      yranti |  2,363,528    172.5058    561.4201          0       2005
+     histate |  2,363,528    .4977318     .499995          0          1
+
+. replace histate=mhistate if year >= 2007 ;
+(430,919 real changes made)
+
+. replace yranti=myranti if year >= 2007 ;
+(430,919 real changes made)
+
+. replace yrpro=myrpro if year >= 2007 ;
+(430,919 real changes made)
+
+. drop mhistate myranti myrpro ;
+
+. summ year yrpro yranti histate ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |  2,794,447    1995.838    9.249282       1980       2010
+       yrpro |  2,794,447    462.6792    843.0343          0       2003
+      yranti |  2,794,447    179.9924    572.2773          0       2005
+     histate |  2,794,447    .4948747    .4999738          0          1
+
+. tab1 state if yranti > 0 ;
+
+-> tabulation of statefip if yranti > 0 
+
+                      State (FIPS code) |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                            Connecticut |     38,497       15.30       15.30
+                                  Maine |     35,676       14.18       29.49
+                              Minnesota |     46,009       18.29       47.78
+                                Montana |     32,214       12.81       60.58
+                               Oklahoma |     35,243       14.01       74.59
+                           Rhode Island |     33,491       13.31       87.91
+                                Vermont |     30,421       12.09      100.00
+----------------------------------------+-----------------------------------
+                                  Total |    251,551      100.00
+
+. tab1 state if yranti==0 ;
+
+-> tabulation of statefip if yranti==0 
+
+                      State (FIPS code) |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                                Alabama |     35,269        1.39        1.39
+                                 Alaska |     41,466        1.63        3.02
+                                Arizona |     38,128        1.50        4.52
+                               Arkansas |     32,302        1.27        5.79
+                             California |    257,885       10.14       15.93
+                               Colorado |     48,009        1.89       17.82
+                               Delaware |     31,670        1.25       19.06
+                   District of Columbia |     29,117        1.15       20.21
+                                Florida |    114,539        4.50       24.71
+                                Georgia |     45,978        1.81       26.52
+                                 Hawaii |     34,777        1.37       27.89
+                                  Idaho |     34,537        1.36       29.25
+                               Illinois |    105,229        4.14       33.38
+                                Indiana |     41,521        1.63       35.02
+                                   Iowa |     40,102        1.58       36.59
+                                 Kansas |     36,860        1.45       38.04
+                               Kentucky |     35,950        1.41       39.46
+                              Louisiana |     30,690        1.21       40.66
+                               Maryland |     43,825        1.72       42.39
+                          Massachusetts |     70,230        2.76       45.15
+                               Michigan |     90,002        3.54       48.69
+                            Mississippi |     31,251        1.23       49.92
+                               Missouri |     39,312        1.55       51.46
+                               Nebraska |     37,865        1.49       52.95
+                                 Nevada |     39,812        1.57       54.52
+                          New Hampshire |     35,728        1.41       55.92
+                             New Jersey |     85,842        3.38       59.30
+                             New Mexico |     38,988        1.53       60.83
+                               New York |    162,903        6.41       67.24
+                         North Carolina |     72,025        2.83       70.07
+                           North Dakota |     34,722        1.37       71.44
+                                   Ohio |     96,212        3.78       75.22
+                                 Oregon |     35,624        1.40       76.62
+                           Pennsylvania |     99,865        3.93       80.55
+                         South Carolina |     33,594        1.32       81.87
+                           South Dakota |     38,422        1.51       83.38
+                              Tennessee |     35,188        1.38       84.76
+                                  Texas |    152,462        6.00       90.76
+                                   Utah |     37,618        1.48       92.24
+                               Virginia |     48,701        1.92       94.15
+                             Washington |     41,195        1.62       95.77
+                          West Virginia |     32,098        1.26       97.04
+                              Wisconsin |     44,203        1.74       98.77
+                                Wyoming |     31,180        1.23      100.00
+----------------------------------------+-----------------------------------
+                                  Total |  2,542,896      100.00
+
+. tab1 state if yrpro > 0 ;
+
+-> tabulation of statefip if yrpro > 0 
+
+                      State (FIPS code) |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                                Alabama |     35,269        5.45        5.45
+                                 Alaska |     41,466        6.41       11.86
+                                Arizona |     38,128        5.89       17.76
+                               Arkansas |     32,302        4.99       22.75
+                                Florida |    114,539       17.71       40.46
+                                Georgia |     45,978        7.11       47.56
+                                  Idaho |     34,537        5.34       52.90
+                                   Iowa |     40,102        6.20       59.10
+                              Louisiana |     30,690        4.74       63.85
+                            Mississippi |     31,251        4.83       68.68
+                                   Ohio |     96,212       14.87       83.55
+                         South Carolina |     33,594        5.19       88.74
+                              Tennessee |     35,188        5.44       94.18
+                                   Utah |     37,618        5.82      100.00
+----------------------------------------+-----------------------------------
+                                  Total |    646,874      100.00
+
+. tab1 state if yrpro==0 ;
+
+-> tabulation of statefip if yrpro==0 
+
+                      State (FIPS code) |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                             California |    257,885       12.01       12.01
+                               Colorado |     48,009        2.24       14.24
+                            Connecticut |     38,497        1.79       16.04
+                               Delaware |     31,670        1.47       17.51
+                   District of Columbia |     29,117        1.36       18.87
+                                 Hawaii |     34,777        1.62       20.49
+                               Illinois |    105,229        4.90       25.39
+                                Indiana |     41,521        1.93       27.32
+                                 Kansas |     36,860        1.72       29.04
+                               Kentucky |     35,950        1.67       30.71
+                                  Maine |     35,676        1.66       32.37
+                               Maryland |     43,825        2.04       34.41
+                          Massachusetts |     70,230        3.27       37.68
+                               Michigan |     90,002        4.19       41.87
+                              Minnesota |     46,009        2.14       44.02
+                               Missouri |     39,312        1.83       45.85
+                                Montana |     32,214        1.50       47.35
+                               Nebraska |     37,865        1.76       49.11
+                                 Nevada |     39,812        1.85       50.96
+                          New Hampshire |     35,728        1.66       52.63
+                             New Jersey |     85,842        4.00       56.62
+                             New Mexico |     38,988        1.82       58.44
+                               New York |    162,903        7.59       66.02
+                         North Carolina |     72,025        3.35       69.38
+                           North Dakota |     34,722        1.62       70.99
+                               Oklahoma |     35,243        1.64       72.64
+                                 Oregon |     35,624        1.66       74.29
+                           Pennsylvania |     99,865        4.65       78.94
+                           Rhode Island |     33,491        1.56       80.50
+                           South Dakota |     38,422        1.79       82.29
+                                  Texas |    152,462        7.10       89.39
+                                Vermont |     30,421        1.42       90.81
+                               Virginia |     48,701        2.27       93.08
+                             Washington |     41,195        1.92       95.00
+                          West Virginia |     32,098        1.49       96.49
+                              Wisconsin |     44,203        2.06       98.55
+                                Wyoming |     31,180        1.45      100.00
+----------------------------------------+-----------------------------------
+                                  Total |  2,147,573      100.00
+
+. bysort state: summ yranti yrpro ;
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Alabama
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     35,269           0           0          0          0
+       yrpro |     35,269        1996           0       1996       1996
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Alaska
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     41,466           0           0          0          0
+       yrpro |     41,466        2002           0       2002       2002
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Arizona
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     38,128           0           0          0          0
+       yrpro |     38,128        1995           0       1995       1995
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Arkansas
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     32,302           0           0          0          0
+       yrpro |     32,302        2002           0       2002       2002
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = California
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |    257,885           0           0          0          0
+       yrpro |    257,885           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Colorado
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     48,009           0           0          0          0
+       yrpro |     48,009           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Connecticut
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     38,497        1996           0       1996       1996
+       yrpro |     38,497           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Delaware
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     31,670           0           0          0          0
+       yrpro |     31,670           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = District of Columbia
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     29,117           0           0          0          0
+       yrpro |     29,117           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Florida
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |    114,539           0           0          0          0
+       yrpro |    114,539        2000           0       2000       2000
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Georgia
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     45,978           0           0          0          0
+       yrpro |     45,978        1998           0       1998       1998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Hawaii
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     34,777           0           0          0          0
+       yrpro |     34,777           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Idaho
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     34,537           0           0          0          0
+       yrpro |     34,537        1999           0       1999       1999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Illinois
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |    105,229           0           0          0          0
+       yrpro |    105,229           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Indiana
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     41,521           0           0          0          0
+       yrpro |     41,521           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Iowa
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     40,102           0           0          0          0
+       yrpro |     40,102        1996           0       1996       1996
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Kansas
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     36,860           0           0          0          0
+       yrpro |     36,860           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Kentucky
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     35,950           0           0          0          0
+       yrpro |     35,950           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Louisiana
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     30,690           0           0          0          0
+       yrpro |     30,690        2003           0       2003       2003
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Maine
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     35,676        2001           0       2001       2001
+       yrpro |     35,676           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Maryland
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     43,825           0           0          0          0
+       yrpro |     43,825           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Massachusetts
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     70,230           0           0          0          0
+       yrpro |     70,230           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Michigan
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     90,002           0           0          0          0
+       yrpro |     90,002           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Minnesota
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     46,009        1993           0       1993       1993
+       yrpro |     46,009           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Mississippi
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     31,251           0           0          0          0
+       yrpro |     31,251        1999           0       1999       1999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Missouri
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     39,312           0           0          0          0
+       yrpro |     39,312           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Montana
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     32,214        2005           0       2005       2005
+       yrpro |     32,214           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Nebraska
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     37,865           0           0          0          0
+       yrpro |     37,865           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Nevada
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     39,812           0           0          0          0
+       yrpro |     39,812           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = New Hampshire
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     35,728           0           0          0          0
+       yrpro |     35,728           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = New Jersey
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     85,842           0           0          0          0
+       yrpro |     85,842           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = New Mexico
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     38,988           0           0          0          0
+       yrpro |     38,988           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = New York
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |    162,903           0           0          0          0
+       yrpro |    162,903           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = North Carolina
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     72,025           0           0          0          0
+       yrpro |     72,025           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = North Dakota
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     34,722           0           0          0          0
+       yrpro |     34,722           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Ohio
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     96,212           0           0          0          0
+       yrpro |     96,212        2001           0       2001       2001
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Oklahoma
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     35,243        1999           0       1999       1999
+       yrpro |     35,243           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Oregon
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     35,624           0           0          0          0
+       yrpro |     35,624           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Pennsylvania
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     99,865           0           0          0          0
+       yrpro |     99,865           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Rhode Island
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     33,491        2003           0       2003       2003
+       yrpro |     33,491           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = South Carolina
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     33,594           0           0          0          0
+       yrpro |     33,594        1985           0       1985       1985
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = South Dakota
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     38,422           0           0          0          0
+       yrpro |     38,422           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Tennessee
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     35,188           0           0          0          0
+       yrpro |     35,188        1999           0       1999       1999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Texas
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |    152,462           0           0          0          0
+       yrpro |    152,462           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Utah
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     37,618           0           0          0          0
+       yrpro |     37,618        2001           0       2001       2001
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Vermont
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     30,421        2003           0       2003       2003
+       yrpro |     30,421           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Virginia
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     48,701           0           0          0          0
+       yrpro |     48,701           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Washington
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     41,195           0           0          0          0
+       yrpro |     41,195           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = West Virginia
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     32,098           0           0          0          0
+       yrpro |     32,098           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Wisconsin
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     44,203           0           0          0          0
+       yrpro |     44,203           0           0          0          0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> statefip = Wyoming
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      yranti |     31,180           0           0          0          0
+       yrpro |     31,180           0           0          0          0
+
+
+. * Note: msa codes in dtindex data run from 40 to 9360, in cps from 80 to 9360 with values > 9900 not identified msas. ;
+. * MSA codes in dtindex data from from 1997-99. cps codes in earlier years updated to match. ;
+. gen msa=metarea ;
+
+. * Recode MSAs that are folded into larger MSAs later ;
+. /* Below is version 1, which updates CPS MSA codes to 97-99 versions in dtindex data. */
+> 
+> replace msa = 3480 if msa == 400 ;
+(662 real changes made)
+
+. replace msa = 3720 if msa == 780 ;
+(510 real changes made)
+
+. replace msa = 1120 if (msa > 1120 & msa < 1124) ;
+(6,027 real changes made)
+
+. replace msa = 7510 if msa == 1140 ;
+(429 real changes made)
+
+. replace msa = 1280 if (msa == 1281) ;
+(670 real changes made)
+
+. drop if msa == 1310 ;
+(4,617 observations deleted)
+
+. replace msa = 1600 if (msa > 1600 & msa < 1605) ;
+(7,298 real changes made)
+
+. replace msa = 1920 if msa == 1921 ;
+(8,667 real changes made)
+
+. replace msa = 2080 if msa == 2081 ;
+(2,036 real changes made)
+
+. replace msa = 3160 if msa == 3161 ;
+(924 real changes made)
+
+. replace msa = 3280 if msa == 3283 ;
+(355 real changes made)
+
+. replace msa = 3360 if msa == 3361 ;
+(856 real changes made)
+
+. replace msa = 4480 if (msa == 4481 | msa == 4482) ;
+(14,553 real changes made)
+
+. replace msa = 3000 if msa == 5320 ;
+(601 real changes made)
+
+. replace msa = 5600 if (msa > 5600 & msa < 5608) ;
+(160,870 real changes made)
+
+. replace msa = 6280 if msa == 6281 ;
+(506 real changes made)
+
+. replace msa = 6440 if msa == 6441 ;
+(469 real changes made)
+
+. replace msa = 6480 if msa == 6482 ;
+(910 real changes made)
+
+. replace msa = 7360 if (msa == 7361 | msa == 7362) ;
+(9,141 real changes made)
+
+. /* Below is additions from version 2, which matches MSAs from about 2004-06 back to 97-99 versions. */
+> /* updated MSA - MJ work on 6/23/2011 */
+> 
+> replace msa = 450 if msa == 451 ;
+(334 real changes made)
+
+. replace msa = 460 if (msa == 461 | msa == 462) ;
+(816 real changes made)
+
+. replace msa = 500 if msa == 501 ;
+(194 real changes made)
+
+. replace msa = 520 if msa == 521 ;
+(8,338 real changes made)
+
+. replace msa = 600 if msa == 601 ;
+(721 real changes made)
+
+. replace msa = 640 if msa == 641 ;
+(2,933 real changes made)
+
+. replace msa = 720 if msa == 721 ;
+(6,695 real changes made)
+
+. replace msa = 740 if msa == 741 ;
+(247 real changes made)
+
+. replace msa = 840 if msa == 841 ;
+(458 real changes made)
+
+. replace msa = 870 if msa == 871 ;
+(227 real changes made)
+
+. replace msa = 1000 if msa == 1001 ;
+(2,036 real changes made)
+
+. replace msa = 1080 if msa == 1081 ;
+(2,855 real changes made)
+
+. replace msa = 1120 if msa == 1124 ;
+(10,842 real changes made)
+
+. replace msa = 1160 if msa == 1161 ;
+(3,549 real changes made)
+
+. replace msa = 1240 if msa == 1241 ;
+(522 real changes made)
+
+. replace msa = 1305 if msa == 1311 ;
+(2,646 real changes made)
+
+. replace msa = 1320 if msa == 1321 ;
+(579 real changes made)
+
+.  replace msa = 1400 if msa == 1401 ;
+(462 real changes made)
+
+. replace msa = 1520 if msa == 1521 ;
+(2,680 real changes made)
+
+. replace msa = 1600 if msa == 1605 ;
+(15,394 real changes made)
+
+. replace msa = 1640 if msa == 1641 ;
+(3,297 real changes made)
+
+. replace msa = 1680 if msa == 1681 ;
+(3,147 real changes made)
+
+. replace msa = 1920 if msa == 1922 ;
+(9,424 real changes made)
+
+. replace msa = 2000 if (msa == 2001 | msa == 2002) ;
+(1,397 real changes made)
+
+. replace msa = 2020 if msa == 2021 ;
+(585 real changes made)
+
+. replace msa = 2080 if (msa == 2082 | msa == 2083) ;
+(8,196 real changes made)
+
+. replace msa = 2160 if msa == 2161 ;
+(7,019 real changes made)
+
+. replace msa = 2240 if msa == 2241 ;
+(493 real changes made)
+
+. replace msa = 2320 if msa == 2310 ;
+(5,914 real changes made)
+
+. replace msa = 2520 if msa == 2521 ;
+(1,883 real changes made)
+
+. replace msa = 6450 if msa == 2540 ;
+(366 real changes made)
+
+. replace msa = 2580 if msa == 2581 ;
+(1,054 real changes made)
+
+. replace msa = 2600 if msa == 2601 ;
+(309 real changes made)
+
+. replace msa = 2655 if msa == 2660 ;
+(376 real changes made)
+
+. replace msa = 2710 if msa == 2711 ;
+(499 real changes made)
+
+. replace msa = 2750 if msa == 2751 ;
+(316 real changes made)
+
+. replace msa = 3000 if (msa > 3000 & msa < 3004) ;
+(2,060 real changes made)
+
+. replace msa = 3120 if (msa == 3121 | msa == 3122) ;
+(1,794 real changes made)
+
+. replace msa = 3160 if (msa == 3162 | msa == 3163) ;
+(1,488 real changes made)
+
+. replace msa = 3180 if msa == 3181 ;
+(417 real changes made)
+
+. replace msa = 3240 if msa == 3241 ;
+(865 real changes made)
+
+. replace msa = 3280 if msa == 3284 ;
+(4,549 real changes made)
+
+. replace msa = 3290 if msa == 3291 ;
+(339 real changes made)
+
+. replace msa = 3350 if msa == 3351 ;
+(22 real changes made)
+
+. replace msa = 3360 if msa == 3362 ;
+(8,154 real changes made)
+
+. replace msa = 3600 if msa == 3590 ;
+(7,180 real changes made)
+
+. replace msa = 3610 if msa == 3611 ;
+(30 real changes made)
+
+. replace msa = 3620 if msa == 3621 ;
+(374 real changes made)
+
+. replace msa = 3660 if (msa == 3661 | msa == 3662) ;
+(509 real changes made)
+
+. replace msa = 3720 if msa == 3721 ;
+(50 real changes made)
+
+. replace msa = 3740 if msa == 3741 ;
+(387 real changes made)
+
+. replace msa = 3810 if msa == 3811 ;
+(533 real changes made)
+
+. replace msa = 4120 if msa == 4130 ;
+(7,505 real changes made)
+
+. replace msa = 4420 if msa == 4421 ;
+(258 real changes made)
+
+. replace msa = 1680 if msa == 4440 ;
+(878 real changes made)
+
+. replace msa = 2840 if msa == 4700 ;
+(407 real changes made)
+
+. replace msa = 4480 if msa == 4483 ;
+(24,200 real changes made)
+
+. replace msa = 4680 if (msa == 4681 | msa == 4682) ;
+(410 real changes made)
+
+. replace msa = 4880 if msa == 4881 ;
+(1,311 real changes made)
+
+. replace msa = 4900 if msa == 4901 ;
+(772 real changes made)
+
+. replace msa = 5000 if msa == 5001 ;
+(8,680 real changes made)
+
+. replace msa = 5080 if msa == 5081 ;
+(3,382 real changes made)
+
+. replace msa = 5120 if msa == 5121 ;
+(9,174 real changes made)
+
+. replace msa = 2160 if msa == 5220 ;
+(376 real changes made)
+
+. replace msa = 3000 if msa == 5321 ;
+(417 real changes made)
+
+. replace msa = 5330 if msa == 5331 ;
+(480 real changes made)
+
+. replace msa = 5345 if (msa == 5340 | msa == 5341) ;
+(1,012 real changes made)
+
+. replace msa = 5360 if msa == 5361 ;
+(2,194 real changes made)
+
+. replace msa = 5480 if msa == 5481 ;
+(2,278 real changes made)
+
+. replace msa = 5560 if msa == 5561 ;
+(1,449 real changes made)
+
+. replace msa = 5660 if msa == 6461 ;
+(1,021 real changes made)
+
+. replace msa = 5720 if msa == 5721 ;
+(2,809 real changes made)
+
+. replace msa = 8040 if msa == 5760 ;
+(383 real changes made)
+
+. replace msa = 5800 if msa == 5801 ;
+(361 real changes made)
+
+. replace msa = 5920 if msa == 5921 ;
+(4,225 real changes made)
+
+. replace msa = 6015 if (msa == 6010 | msa == 6011) ;
+(582 real changes made)
+
+. replace msa = 6080 if msa == 6081 ;
+(620 real changes made)
+
+. replace msa = 6160 if msa == 6161 ;
+(13,685 real changes made)
+
+. replace msa = 6200 if msa == 6201 ;
+(6,041 real changes made)
+
+. replace msa = 6400 if msa == 6401 ;
+(3,159 real changes made)
+
+. replace msa = 6440 if msa == 6442 ;
+(4,915 real changes made)
+
+. replace msa = 6450 if (msa == 6451 | msa == 6452) ;
+(1,333 real changes made)
+
+. replace msa = 6480 if msa == 6483 ;
+(10,657 real changes made)
+
+. replace msa = 6640 if (msa == 6641 | msa == 6642) ;
+(2,446 real changes made)
+
+. replace msa = 6720 if msa == 6721 ;
+(1,744 real changes made)
+
+. replace msa = 6760 if msa == 6761 ;
+(2,170 real changes made)
+
+. replace msa = 6920 if msa == 6921 ;
+(3,122 real changes made)
+
+. replace msa = 6960 if msa == 6961 ;
+(347 real changes made)
+
+. replace msa = 7120 if msa == 7121 ;
+(702 real changes made)
+
+. replace msa = 7160 if (msa == 7161 | msa == 7162) ;
+(5,361 real changes made)
+
+. replace msa = 7320 if msa == 7321 ;
+(4,930 real changes made)
+
+. replace msa = 7360 if (msa > 7362 & msa < 7366) ;
+(7,964 real changes made)
+
+. replace msa = 7360 if msa == 7401 ;
+(3,491 real changes made)
+
+. replace msa = 7460 if msa == 7461 ;
+(380 real changes made)
+
+. replace msa = 7480 if (msa == 7470 | msa == 7481 | msa == 7471) ;
+(2,607 real changes made)
+
+. replace msa = 7510 if msa == 7511 ;
+(817 real changes made)
+
+. replace msa = 7600 if msa == 7601 ;
+(5,980 real changes made)
+
+. replace msa = 7680 if msa == 7681 ;
+(583 real changes made)
+
+. replace msa = 8000 if msa == 8001 ;
+(1,055 real changes made)
+
+. replace msa = 8480 if msa == 8481 ;
+(394 real changes made)
+
+. replace msa = 8735 if (msa == 8730 | msa == 8731) ;
+(4,126 real changes made)
+
+. replace msa = 8780 if msa == 8781 ;
+(636 real changes made)
+
+. replace msa = 9280 if msa == 9281 ;
+(598 real changes made)
+
+. replace msa = 9320 if msa == 9321 ;
+(735 real changes made)
+
+. /* Not using pcarrests, the var merged below. I don't know why the merge is so bad. */
+> 
+> sort msa ;
+
+. *merge m:1 msa using "msadtindex.dta", keepusing(dti9799 size_index9799 ind_index9799) ;
+. merge m:1 msa using Input\msadtindex.dta, keepusing(dti9799 size_index9799 ind_index9799) ;
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                       958,589
+        from master                   958,523  (_merge==1)
+        from using                         66  (_merge==2)
+
+    matched                         1,831,307  (_merge==3)
+    -----------------------------------------
+
+. tab1 msa if _merge==1 ;
+
+-> tabulation of msa if _merge==1 
+
+        msa |      Freq.     Percent        Cum.
+------------+-----------------------------------
+        900 |        534        0.06        0.06
+       1130 |        158        0.02        0.07
+       1650 |         37        0.00        0.08
+       1700 |        515        0.05        0.13
+       2300 |        415        0.04        0.17
+       3260 |        361        0.04        0.21
+       3830 |        357        0.04        0.25
+       5040 |        290        0.03        0.28
+       5840 |         71        0.01        0.29
+       5950 |      1,119        0.12        0.40
+       6460 |        753        0.08        0.48
+       6470 |        194        0.02        0.50
+       7140 |        292        0.03        0.53
+       8700 |        276        0.03        0.56
+       8740 |        294        0.03        0.59
+       9997 |    220,446       23.00       23.59
+       9998 |    636,215       66.37       89.96
+       9999 |     96,196       10.04      100.00
+------------+-----------------------------------
+      Total |    958,523      100.00
+
+. tab1 year if _merge==1 ;
+
+-> tabulation of year if _merge==1 
+
+Survey year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       1980 |     60,994        6.36        6.36
+       1981 |     60,992        6.36       12.73
+       1982 |     53,072        5.54       18.26
+       1983 |     53,829        5.62       23.88
+       1984 |     53,611        5.59       29.47
+       1985 |     52,581        5.49       34.96
+       1986 |     24,830        2.59       37.55
+       1987 |     24,388        2.54       40.09
+       1988 |     24,387        2.54       42.64
+       1989 |     24,250        2.53       45.17
+       1990 |     24,781        2.59       47.75
+       1991 |     24,933        2.60       50.35
+       1992 |     24,531        2.56       52.91
+       1993 |     24,544        2.56       55.47
+       1994 |     23,588        2.46       57.93
+       1995 |     22,863        2.39       60.32
+       1996 |     17,606        1.84       62.16
+       1997 |     17,867        1.86       64.02
+       1998 |     17,762        1.85       65.87
+       1999 |     17,735        1.85       67.72
+       2000 |     17,867        1.86       69.59
+       2001 |     31,193        3.25       72.84
+       2002 |     30,757        3.21       76.05
+       2003 |     30,425        3.17       79.22
+       2004 |     30,109        3.14       82.37
+       2005 |     29,609        3.09       85.45
+       2006 |     28,627        2.99       88.44
+       2007 |     28,123        2.93       91.38
+       2008 |     27,605        2.88       94.26
+       2009 |     27,469        2.87       97.12
+       2010 |     27,595        2.88      100.00
+------------+-----------------------------------
+      Total |    958,523      100.00
+
+. bysort year: summ msa if _merge==1 ;
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1980
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     60,994    9997.417    .4931481       9997       9998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1981
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     60,992    9997.423    .4940813       9997       9998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1982
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     53,072    9997.435    .4957436       9997       9998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1983
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     53,829    9997.436    .4959408       9997       9998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1984
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     53,611    9997.431    .4952562       9997       9998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1985
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     52,581    9997.435    .4957474       9997       9998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1986
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     24,830    9969.929    326.7829       5950       9998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1987
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     24,388    9970.318    323.9181       5950       9998
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1988
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     24,387      9969.6    329.3632       5950       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1989
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     24,250    9970.897    325.2835       5950       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1990
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     24,781    9960.446    378.4631       5950       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1991
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     24,933    9961.855    371.6578       5950       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1992
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     24,531    9963.294    365.7984       5950       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1993
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     24,544    9971.987    316.1413       5950       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1994
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     23,588    9971.682    318.3617       5950       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1995
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     22,863    9975.232    296.0611       5950       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1996
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     17,606    9998.145    .3767547       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1997
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     17,867    9998.141    .3761627       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1998
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     17,762    9998.138    .3740751       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 1999
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     17,735    9998.132    .3665589       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2000
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     17,867    9998.137    .3704274       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2001
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     31,193    9998.135    .3847491       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2002
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     30,757    9998.131    .3778347       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2003
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     30,425    9998.134    .3792897       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2004
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     30,109    9998.139     .385002       9997       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2005
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     29,609    9901.175    831.5732        900       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2006
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     28,627    9855.041    1000.789        900       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2007
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     28,123    9861.995    975.0153        900       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2008
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     27,605    9862.412    983.6471        900       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2009
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     27,469    9851.317    1022.187        900       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = 2010
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |     27,595     9850.68     1024.23        900       9999
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-> year = .
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+         msa |          0
+
+
+. drop _merge ;
+
+. sort msa ;
+
+. merge m:1 msa year using `tempmsa.dta' ;
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                     2,263,521
+        from master                 2,261,456  (_merge==1)
+        from using                      2,065  (_merge==2)
+
+    matched                           528,440  (_merge==3)
+    -----------------------------------------
+
+. summ ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |  2,791,894    1995.834    9.251798       1980       2010
+      serial |  2,789,830    42027.42    25301.71          1      99986
+     hwtsupp |  2,789,830    1513.625    889.0142          0   17957.53
+      region |  2,789,830    27.60227    10.87891         11         42
+    statefip |  2,789,830    27.98113    15.61625          1         56
+-------------+---------------------------------------------------------
+       metro |  2,789,830    2.326773    1.082222          0          4
+     metarea |  2,789,830     6404.36    3284.727         80       9999
+      county |  1,454,591    9788.581    15372.94          0      55139
+       month |  2,789,830           3           0          3          3
+      wtsupp |  2,789,830    1559.464     938.453          0      18656
+-------------+---------------------------------------------------------
+      wtfinl |  2,789,830    16.45403    11.96503          0   347.1621
+         age |  2,789,830    35.77916    10.53918         18         55
+         sex |  2,789,830    1.517452    .4996954          1          2
+        race |  2,789,830    141.0957    129.0055        100        830
+      hispan |  2,789,830    34.87888    116.3769          0        902
+-------------+---------------------------------------------------------
+        educ |  2,789,830    80.95922    24.02047          2        125
+    schlcoll |  2,265,614    .6841744    1.601179          0          5
+     empstat |  2,789,830    14.71266     8.30169          0         34
+     occ1950 |  2,789,830    544.4655    325.3837          0        999
+     ind1950 |  2,789,830    528.7638    331.1185          0        936
+-------------+---------------------------------------------------------
+    wkswork1 |  2,789,830     37.8717    20.68289          0         52
+    uhrswork |  2,789,830    32.69553    18.28798          0         99
+    wksunem1 |  2,789,830    91.07615    24.53976          1         99
+     pension |  2,789,830    1.615809     1.13034          0          3
+       union |  1,944,295    .1708794    .4442598          0          3
+-------------+---------------------------------------------------------
+    firmsize |  2,101,816    3.906465    2.713175          0          7
+     ptweeks |  2,789,830    5.823675    14.04546          0         52
+     incwage |  2,789,830    21279.48    31925.73          0     748263
+     inclugh |  2,789,830    1.016031    .9367821          0          2
+      paidgh |  2,789,830    9.413369    10.43144          0         22
+-------------+---------------------------------------------------------
+        empd |  2,789,146    .7518165    .4319589          0          1
+      unempd |  2,789,146    .0512479    .2205031          0          1
+    inclughr |  2,312,440    .5329254    .4989148          0          1
+    ptweeksr |  2,312,440     7.02594    15.15104          0         52
+    pensionr |  2,312,438    .5278278    .4992251          0          1
+-------------+---------------------------------------------------------
+        ind1 |  2,214,909    6.869783    2.751405          1         11
+     agegrp3 |  2,789,830    2.348265    .7716374          1          3
+      female |  2,789,830     .517452    .4996954          0          1
+       black |  2,789,830    .1024557    .3032467          0          1
+       other |  2,789,830     .059533    .2366196          0          1
+-------------+---------------------------------------------------------
+        hisp |  2,789,830    .1337081    .3403385          0          1
+      edgrp4 |  2,789,830    2.427767    1.135154          1          4
+   firmsizer |  1,753,241    2.716362    1.289671          1          4
+        cpiu |  2,789,830    465.2555    123.4236      246.8    653.198
+        defl |  2,789,830    .9020075    .2392858     .47848   1.266379
+-------------+---------------------------------------------------------
+      rwwage |  2,312,440    577.0821    827.8019          0   446683.4
+      rhwage |  2,312,440    14.83523    228.3768          0   323885.3
+   wwagesamp |  2,789,830    .7325909    .4426077          0          1
+   hwagesamp |  2,789,830    .7326593    .4425717          0          1
+      yranti |  2,789,830    176.9754     567.921          0       2005
+-------------+---------------------------------------------------------
+       yrpro |  2,789,830    463.4449    843.5212          0       2003
+     dti8893 |  2,358,911    1.091809    .0286655   1.005698   1.148978
+size_in~8893 |  2,358,911    .5987985    .0187508    .527682   .6333541
+ind_ind~8893 |  2,358,911    .4930105    .0192859   .4097421    .531737
+     histate |  2,789,830    .4956936    .4999815          0          1
+-------------+---------------------------------------------------------
+     minwage |  2,789,830    4.765754    1.359164        3.1       8.55
+unemployme~e |  2,789,830    6.210884    2.099833        2.3       17.4
+     incarcr |  2,776,528    .0068012    .0037201   .0006989   .0353081
+         msa |  2,791,929    6402.603    3284.527         40       9999
+ind_ind~9799 |  1,831,373     .468882    .0194116    .398577   .5022318
+-------------+---------------------------------------------------------
+size_in~9799 |  1,831,373     .598744    .0124206   .5125893   .6268912
+     dti9799 |  1,831,373    1.067626    .0208795   .9667411    1.10597
+   pcarrests |    448,099    .0040306    .0023395          0   .0202928
+      _merge |  2,791,961    1.379284    .7835635          1          3
+
+. summ rhwage firmsizer pensionr inclughr black age female dti8893 dti9799 incarcr minwage unemploymentrate pcarrests ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      rhwage |  2,312,440    14.83523    228.3768          0   323885.3
+   firmsizer |  1,753,241    2.716362    1.289671          1          4
+    pensionr |  2,312,438    .5278278    .4992251          0          1
+    inclughr |  2,312,440    .5329254    .4989148          0          1
+       black |  2,789,830    .1024557    .3032467          0          1
+-------------+---------------------------------------------------------
+         age |  2,789,830    35.77916    10.53918         18         55
+      female |  2,789,830     .517452    .4996954          0          1
+     dti8893 |  2,358,911    1.091809    .0286655   1.005698   1.148978
+     dti9799 |  1,831,373    1.067626    .0208795   .9667411    1.10597
+     incarcr |  2,776,528    .0068012    .0037201   .0006989   .0353081
+-------------+---------------------------------------------------------
+     minwage |  2,789,830    4.765754    1.359164        3.1       8.55
+unemployme~e |  2,789,830    6.210884    2.099833        2.3       17.4
+   pcarrests |    448,099    .0040306    .0023395          0   .0202928
+
+. summ rhwage firmsizer pensionr inclughr black age female dti8893 dti9799 incarcr minwage unemploymentrate pcarrests if year <= 2006 ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      rhwage |  1,961,865    14.28993    77.72617          0   67794.09
+   firmsizer |  1,402,666    2.714502    1.288582          1          4
+    pensionr |  1,961,863    .5290425    .4991559          0          1
+    inclughr |  1,961,865    .5402783    .4983751          0          1
+       black |  2,358,911    .1002153    .3002869          0          1
+-------------+---------------------------------------------------------
+         age |  2,358,911    35.54996    10.47749         18         55
+      female |  2,358,911    .5172828    .4997013          0          1
+     dti8893 |  2,358,911    1.091809    .0286655   1.005698   1.148978
+     dti9799 |  1,511,180     1.06784    .0206514   .9667411    1.10597
+     incarcr |  2,351,576    .0064368    .0036703   .0006989   .0353081
+-------------+---------------------------------------------------------
+     minwage |  2,358,911    4.371192    1.027669        3.1       7.63
+unemployme~e |  2,358,911    6.063013    1.955509        2.3       17.4
+   pcarrests |    448,099    .0040306    .0023395          0   .0202928
+
+. summ rhwage firmsizer pensionr inclughr black age female dti8893 dti9799 incarcr minwage unemploymentrate pcarrests if year > 2006 ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      rhwage |    350,575     17.8868    556.9642          0   323885.3
+   firmsizer |    350,575    2.723802    1.293992          1          4
+    pensionr |    350,575    .5210297    .4995583          0          1
+    inclughr |    350,575    .4917778    .4999331          0          1
+       black |    430,919    .1147199     .318684          0          1
+-------------+---------------------------------------------------------
+         age |    430,919    37.03382    10.78469         18         55
+      female |    430,919    .5183782    .4996627          0          1
+     dti8893 |          0
+     dti9799 |    320,193    1.066617    .0218961   .9667411    1.10597
+     incarcr |    424,952    .0088178    .0033279   .0030647    .019237
+-------------+---------------------------------------------------------
+     minwage |    430,919    6.925638    .8131981       5.15       8.55
+unemployme~e |    430,919    7.020351    2.615015        2.7       13.7
+   pcarrests |          0
+
+. * drop DC ;
+. drop if statefip==11 ;
+(29,117 observations deleted)
+
+. * merge in state annual employment growth by industry ;
+. drop _merge ;
+
+. rename statefip fips ;
+
+. sort fips year ;
+
+. *merge m:1 fips year using stempgrowth_dt.dta ;
+. merge m:1 fips year using Input\stempgrowth_dt.dta ;
+(note: variable fips was float, now double to accommodate using data's values)
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                         2,131
+        from master                     2,131  (_merge==1)
+        from using                          0  (_merge==2)
+
+    matched                         2,760,713  (_merge==3)
+    -----------------------------------------
+
+. summ fips if _merge < 3 ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        fips |          0
+
+. drop if _merge < 3 ;
+(2,131 observations deleted)
+
+. drop _merge ;
+
+. rename fips statefip ;
+
+. compress ;
+  variable year was float now int
+  variable wtsupp was float now int
+  variable empd was float now byte
+  variable unempd was float now byte
+  variable inclughr was float now byte
+  variable ptweeksr was float now byte
+  variable pensionr was float now byte
+  variable ind1 was float now byte
+  variable agegrp3 was float now byte
+  variable female was float now byte
+  variable black was float now byte
+  variable other was float now byte
+  variable hisp was float now byte
+  variable edgrp4 was float now byte
+  variable firmsizer was float now byte
+  variable wwagesamp was float now byte
+  variable hwagesamp was float now byte
+  variable yranti was float now int
+  variable yrpro was float now int
+  variable histate was float now byte
+  variable msa was float now int
+  variable statefip was double now byte
+  (179,446,345 bytes saved)
+
+. *save marcps.dta, replace ;
+. save Output\marcps.dta, replace ;
+(note: file Output\marcps.dta not found)
+file Output\marcps.dta saved
+
+. sample 5 ;
+(2,622,677 observations deleted)
+
+. *save marcps_test.dta, replace ;
+. save Output\marcps_test.dta, replace ;
+(note: file Output\marcps_test.dta not found)
+file Output\marcps_test.dta saved
+
+. log close ;
+      name:  <unnamed>
+       log:  H:\Other\Paper Codes for Uploading\drug-testing\Data_Setup_March_CPS\make_marcps.log
+  log type:  text
+ closed on:   5 Mar 2020, 11:28:42
+----------------------------------------------------------------------------------------------------------------------------------------------------

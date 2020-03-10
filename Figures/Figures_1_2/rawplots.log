@@ -1,0 +1,436 @@
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  H:\Other\Paper Codes for Uploading\drug-testing\Figures\Figures_1_2\rawplots.log
+  log type:  text
+ opened on:   6 Mar 2020, 19:03:09
+
+. /*****
+> 
+> Graph share in high testing industry by race over time.
+> 
+> *****/
+> 
+> set mem 1g ;
+set memory ignored.
+    Memory no longer needs to be set in modern Statas; memory adjustments are performed on the fly automatically.
+
+. set matsize 800 ;
+
+. set more off ;
+
+. cd .. ;
+H:\Other\Paper Codes for Uploading\drug-testing\Figures
+
+. cd ../Data_Setup_March_CPS/. ;
+H:\Other\Paper Codes for Uploading\drug-testing\Data_Setup_March_CPS
+
+. *"C:\Users\awaggone\Documents\Drug Testing\REStat revision\Data and do files\Data_March_CPS\marcps.dta" ;
+. use Output/marcps.dta ;
+
+. *use marcps_test.dta ;
+. cd ../Figures/Figures_1_2/. ;
+H:\Other\Paper Codes for Uploading\drug-testing\Figures\Figures_1_2
+
+. summ year ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |  2,760,713    1995.826    9.249745       1980       2010
+
+. tab1 year ;
+
+-> tabulation of year  
+
+Survey year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       1980 |     91,984        3.33        3.33
+       1981 |     92,612        3.35        6.69
+       1982 |     83,377        3.02        9.71
+       1983 |     83,921        3.04       12.75
+       1984 |     83,492        3.02       15.77
+       1985 |     83,674        3.03       18.80
+       1986 |     81,518        2.95       21.75
+       1987 |     80,647        2.92       24.68
+       1988 |     80,858        2.93       27.60
+       1989 |     75,092        2.72       30.32
+       1990 |     82,749        3.00       33.32
+       1991 |     82,855        3.00       36.32
+       1992 |     81,902        2.97       39.29
+       1993 |     81,244        2.94       42.23
+       1994 |     78,499        2.84       45.08
+       1995 |     78,239        2.83       47.91
+       1996 |     67,990        2.46       50.37
+       1997 |     68,899        2.50       52.87
+       1998 |     68,943        2.50       55.37
+       1999 |     69,521        2.52       57.88
+       2000 |     70,399        2.55       60.43
+       2001 |    114,014        4.13       64.56
+       2002 |    113,398        4.11       68.67
+       2003 |    112,806        4.09       72.76
+       2004 |    110,610        4.01       76.76
+       2005 |    108,873        3.94       80.71
+       2006 |    107,645        3.90       84.61
+       2007 |    106,069        3.84       88.45
+       2008 |    105,475        3.82       92.27
+       2009 |    106,162        3.85       96.12
+       2010 |    107,246        3.88      100.00
+------------+-----------------------------------
+      Total |  2,760,713      100.00
+
+. * Pro and anti dummies, by state-year ;
+. gen pro=0 ;
+
+. replace pro=1 if (year>=yrpro & yrpro~=0) ;
+(287,572 real changes made)
+
+. gen anti=0 ;
+
+. replace anti=1 if (year>=yranti & yranti~=0) ;
+(119,778 real changes made)
+
+. * Reduce education groups to 2 ;
+. gen lowskill=1 if edgrp4==1 | edgrp4==2 ;
+(1,354,018 missing values generated)
+
+. replace lowskill=0 if edgrp4==3 | edgrp4==4 ;
+(1,354,018 real changes made)
+
+. gen young=(age<=25) ;
+
+. summ young lowskill ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+       young |  2,760,713    .2112277    .4081796          0          1
+    lowskill |  2,760,713    .5095405    .4999091          0          1
+
+. /** Outcome variables **/
+> 
+> gen empdhi=1 if empd==1 & inlist(ind1,1,4,5,3,11)==1 ;
+(2,189,585 missing values generated)
+
+. replace empdhi=0 if empd==1 & inlist(ind1,1,4,5,3,11)~=1 ;
+(1,504,219 real changes made)
+
+. summ empdhi ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      empdhi |  2,075,347    .2751964    .4466133          0          1
+
+. gen empdmid=1 if firmsizer==2 | firmsizer==3 ;
+(2,292,171 missing values generated)
+
+. replace empdmid=0 if firmsizer==1 | firmsizer==4 ;
+(1,266,443 real changes made)
+
+. gen empdlg=1 if firmsizer==4 ;
+(2,005,557 missing values generated)
+
+. replace empdlg=0 if firmsizer==1 | firmsizer==2 | firmsizer==3 ;
+(979,829 real changes made)
+
+. gen ph=. ;
+(2,760,713 missing values generated)
+
+. replace ph=1 if pensionr==1 | inclughr==1 ;
+(1,524,078 real changes made)
+
+. replace ph=0 if pensionr==0 & inclughr==0 ;
+(764,615 real changes made)
+
+. replace ph=. if pensionr==. | inclughr==. ;
+(0 real changes made)
+
+. summ empdmid empdlg ph ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+     empdmid |  1,734,985    .2700554    .4439883          0          1
+      empdlg |  1,734,985    .4352522    .4957901          0          1
+          ph |  2,288,693    .6659163    .4716692          0          1
+
+. gen lrhw=log(rhwage) ;
+(608,313 missing values generated)
+
+. drop if hisp==1 ;
+(370,374 observations deleted)
+
+. preserve ;
+
+. collapse (mean) empdhi, by(year black) ;
+
+. summ ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |         62        1995    9.017288       1980       2010
+       black |         62          .5    .5040817          0          1
+      empdhi |         62    .2970093     .047269   .2131641   .3803179
+
+. sort year ;
+
+. graph twoway connect empdhi year if black==0, msymbol(+) ||
+>   connect empdhi year if black==1,
+>   msymbol(S)
+>   legend(label(1 "Whites") label(2 "Blacks"))
+>   ytitle("")
+>   ti("Share of Employed in High Testing Industries")
+>   saving("Output/rawplots_year", replace) ;
+(file Output/rawplots_year.gph saved)
+
+. clear ;
+
+. restore ;
+
+. drop if yrpro==0 & yranti==0 ;
+(1,567,686 observations deleted)
+
+. tab1 state if yrpro >0 ;
+
+-> tabulation of statefip if yrpro >0 
+
+                      State (FIPS code) |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                                Alabama |     34,730        5.91        5.91
+                                 Alaska |     39,645        6.75       12.66
+                                Arizona |     25,817        4.39       17.05
+                               Arkansas |     31,231        5.32       22.37
+                                Florida |     87,707       14.93       37.29
+                                Georgia |     43,468        7.40       44.69
+                                  Idaho |     30,970        5.27       49.96
+                                   Iowa |     38,404        6.54       56.50
+                              Louisiana |     29,588        5.04       61.54
+                            Mississippi |     30,806        5.24       66.78
+                                   Ohio |     94,200       16.03       82.81
+                         South Carolina |     32,866        5.59       88.40
+                              Tennessee |     34,285        5.84       94.24
+                                   Utah |     33,845        5.76      100.00
+----------------------------------------+-----------------------------------
+                                  Total |    587,562      100.00
+
+. tab1 state if yranti >0 ;
+
+-> tabulation of statefip if yranti >0 
+
+                      State (FIPS code) |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                            Connecticut |     34,462       14.66       14.66
+                                  Maine |     35,356       15.04       29.70
+                              Minnesota |     44,384       18.88       48.58
+                                Montana |     31,432       13.37       61.95
+                               Oklahoma |     33,390       14.20       76.15
+                           Rhode Island |     30,506       12.98       89.13
+                                Vermont |     25,561       10.87      100.00
+----------------------------------------+-----------------------------------
+                                  Total |    235,091      100.00
+
+. gen yearlaw=yrpro ;
+
+. replace yearlaw=yranti if yearlaw==0 ;
+(235,091 real changes made)
+
+. summ yearlaw ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+     yearlaw |    822,653    1998.954     4.02749       1985       2005
+
+. gen ttlaw = year - yearlaw ;
+
+. summ ttlaw ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+       ttlaw |    822,653   -3.150999    10.29155        -25         25
+
+. gen everpro=0 ;
+
+. replace everpro=1 if yrpro> 0 ;
+(587,562 real changes made)
+
+. *** Plots by time to law implementation ;
+. *** Raw and lowess mean smoothed relative to year zero mean - all data and trimmed to 10 years pre and post ;
+. collapse (mean) empdhi, by(ttlaw everpro black) ;
+
+. summ ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+       black |        184          .5    .5013643          0          1
+       ttlaw |        184   -1.336957    13.62838        -25         25
+     everpro |        184    .5326087    .5002969          0          1
+      empdhi |        183    .2980073    .0690444          0   .6666667
+
+. sort ttlaw ;
+
+. graph twoway connect empdhi ttlaw if black==1 & everpro==1 ||
+>   connect empdhi ttlaw if black==1 & everpro==0 ||
+>   connect empdhi ttlaw if black==0 & everpro==1 ||
+>   connect empdhi ttlaw if black==0 & everpro==0 ,
+>   legend(label(1 "Blacks, Pro States") label(2 "Blacks, Anti States") label(3 "Whites, Pro States") label(4 "Whites, Anti States"))
+>   ti("Share of Employed in High Testing Industries")
+>   ytitle("")
+>   ylabel(.1 (.1) .5)
+>   xtitle("Years to Law Implementation")  
+>   saving("Output/rawplots_ttlaw", replace) ;
+(file Output/rawplots_ttlaw.gph saved)
+
+. graph twoway connect empdhi ttlaw if black==1 & everpro==1 ||
+>   connect empdhi ttlaw if black==0 & everpro==1,
+>   legend(label(1 "Blacks, Pro States") label(2 "Whites, Pro States")) 
+>   ti("Share of Employed in High Testing Industries")
+>   ytitle("")
+>   yscale(range(.1 .5))
+>   ylabel(.1 (.1) .5)
+>   xtitle("Years to Law Implementation")  
+>   saving("Output/rawplots_ttlaw_pro", replace) ;
+(file Output/rawplots_ttlaw_pro.gph saved)
+
+. graph twoway scatter empdhi ttlaw if black==1 & everpro==1 & (ttlaw >= -10 & ttlaw <= 10)||
+>   scatter empdhi ttlaw if black==0 & everpro==1 & (ttlaw >= -10 & ttlaw <= 10),
+>   legend(label(1 "Blacks, Pro States") label(2 "Whites, Pro States")) 
+>   ti("Share of Employed in High Testing Industries")
+>   ytitle("")
+>   yscale(range(.1 .5))
+>   ylabel(.1 (.1) .5)
+>   xtitle("Years to Law Implementation")  
+>   saving("Output/rawplots_ttlaw_pro10yr", replace) ;
+(file Output/rawplots_ttlaw_pro10yr.gph saved)
+
+.   graph twoway scatter empdhi ttlaw if black==1 & everpro==0 & (ttlaw >= -10 & ttlaw <= 10)||
+>   scatter empdhi ttlaw if black==0 & everpro==0 & (ttlaw >= -10 & ttlaw <= 10),
+>   legend(label(1 "Blacks, Anti States") label(2 "Whites, Anti States")) 
+>   ti("Share of Employed in High Testing Industries")
+>   ytitle("")
+>   yscale(range(.1 .5))
+>   ylabel(.1 (.1) .5)
+>   xtitle("Years to Law Implementation")  
+>   saving("Output/rawplots_ttlaw_anti10yr", replace) ;
+(file Output/rawplots_ttlaw_anti10yr.gph saved)
+
+.       /** Generate smoothed series **/
+>   
+> lowess empdhi ttlaw if black==1 & everpro==1, mean adjust nograph generate(sm_empdhi_bp) ;
+
+. lowess empdhi ttlaw if black==0 & everpro==1, mean adjust nograph generate(sm_empdhi_wp) ;
+
+.   lowess empdhi ttlaw if black==1 & everpro==0, mean adjust nograph generate(sm_empdhi_ba) ;
+
+. lowess empdhi ttlaw if black==0 & everpro==0, mean adjust nograph generate(sm_empdhi_wa) ;
+
+. summ sm_* ;
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+sm_empdhi_bp |         49    .2980073    .0101854   .2823687   .3122465
+sm_empdhi_wp |         49    .2980073    .0291479    .268693   .3482237
+sm_empdhi_ba |         42    .2980073    .0608888   .2135108   .3712062
+sm_empdhi_wa |         43    .2980073    .0352947   .2538644    .342967
+
+. gen zerorate=sm_empdhi_bp if black==1 & everpro==1 & ttlaw==0 ;
+(183 missing values generated)
+
+. replace zerorate=sm_empdhi_wp if black==0 & everpro==1 & ttlaw==0 ;
+(1 real change made)
+
+. replace zerorate=sm_empdhi_ba if black==1 & everpro==0 & ttlaw==0 ;
+(1 real change made)
+
+. replace zerorate=sm_empdhi_wa if black==0 & everpro==0 & ttlaw==0 ;
+(1 real change made)
+
+. bysort black everpro: egen mzerorate=max(zerorate) ;
+
+. gen asm_empdhi_wp = sm_empdhi_wp - mzerorate ;
+(135 missing values generated)
+
+. gen asm_empdhi_bp = sm_empdhi_bp - mzerorate ;
+(135 missing values generated)
+
+. gen asm_empdhi_wa = sm_empdhi_wa - mzerorate ;
+(141 missing values generated)
+
+. gen asm_empdhi_ba = sm_empdhi_ba - mzerorate ;
+(142 missing values generated)
+
+. sort ttlaw ;
+
+. /** Graphs of smoothed data **/
+> 
+> graph twoway connect asm_empdhi_bp ttlaw if black==1 ||
+>   connect asm_empdhi_wp ttlaw if black==0,
+>   legend(label(1 "Blacks, Pro States") label(2 "Whites, Pro States")) 
+>   ti("Share of Employed in High Testing Industries")
+>   subti("(Relative to Passage Year, Smoothed)")
+>   ytitle("")
+>   xtitle("Years to Law Implementation")
+>   saving("Output/rawplots_ttlaw_lowess1", replace) ;
+(file Output/rawplots_ttlaw_lowess1.gph saved)
+
+. graph twoway connect asm_empdhi_ba ttlaw if black==1 ||
+>   connect asm_empdhi_wa ttlaw if black==0,
+>   legend(label(1 "Blacks, Anti States") label(2 "Whites, Anti States")) 
+>   ti("Share of Employed in High Testing Industries")
+>   subti("(Relative to Passage Year, Smoothed)")
+>   ytitle("")
+>   xtitle("Years to Law Implementation")
+>   saving("Output/rawplots_ttlaw_lowess2", replace) ;
+(file Output/rawplots_ttlaw_lowess2.gph saved)
+
+. graph twoway connect asm_empdhi_bp ttlaw if black==1 & (ttlaw >= -10 & ttlaw <= 10), msymbol(+)  ||
+>   connect asm_empdhi_wp ttlaw if black==0 & (ttlaw >= -10 & ttlaw <= 10),
+>   msymbol(S)
+>   legend(label(1 "Blacks") label(2 "Whites")) 
+>   ti("Relative Employment in High Testing Industries")
+>   subti("(Pro-Testing States Only, Smoothed)")
+>   ytitle("")
+>   xtitle("Years to Law Implementation")
+>   saving("Output/rawplots_ttlaw_lowess1trim10", replace) ;
+(file Output/rawplots_ttlaw_lowess1trim10.gph saved)
+
+. graph twoway connect asm_empdhi_ba ttlaw if black==1 & (ttlaw >= -10 & ttlaw <= 10), msymbol(+)  ||
+>   connect asm_empdhi_wa ttlaw if black==0 & (ttlaw >= -10 & ttlaw <= 10),
+>   msymbol(S)
+>   legend(label(1 "Blacks") label(2 "Whites")) 
+>   ti("Relative Employment in High Testing Industries")
+>   subti("(Anti-Testing States Only, Smoothed)")
+>   ytitle("")
+>   xtitle("Years to Law Implementation")
+>   saving("Output/rawplots_ttlaw_lowess2trim10", replace) ;
+(file Output/rawplots_ttlaw_lowess2trim10.gph saved)
+
+.   /** Graphs of smoothed data plus raw rates **/
+> 
+> graph twoway connect asm_empdhi_bp ttlaw if black==1 & (ttlaw >= -10 & ttlaw <= 10), yaxis(1) lcolor(black) mcolor(black) msymbol(triangle)||
+>   connect asm_empdhi_wp ttlaw if black==0 & (ttlaw >= -10 & ttlaw <= 10), yaxis(1) lcolor(gs8) mcolor(gs8) msymbol(circle)||
+>   scatter empdhi ttlaw if black==1 & everpro==1 & (ttlaw >= -10 & ttlaw <= 10), yaxis(2) msymbol(triangle_hollow) mcolor(black)||
+>   scatter empdhi ttlaw if black==0 & everpro==1 & (ttlaw >= -10 & ttlaw <= 10), yaxis(2) msymbol(circle_hollow) mcolor(gs8)||,
+>   legend(order(- "Left axis:" 1 2 - "Right axis:" 3 4) holes(2 6) label(1 "Blacks") label(2 "Whites") label(3 "Blacks") label(4 "Whites")) 
+>   ti("Employment in High Testing Industries: Pro-testing States")
+>   subti(" ")
+>   ytitle("ER relative to year zero, smoothed", axis(1))
+>   ytitle("Employment rate (ER)", axis(2))
+>   xtitle("Years to Law Implementation")
+>   saving("Output/rawplots_ttlaw_proboth10", replace) ;
+(file Output/rawplots_ttlaw_proboth10.gph saved)
+
+. graph twoway connect asm_empdhi_ba ttlaw if black==1 & (ttlaw >= -10 & ttlaw <= 10), yaxis(1) lcolor(black) mcolor(black) msymbol(triangle)||
+>   connect asm_empdhi_wa ttlaw if black==0 & (ttlaw >= -10 & ttlaw <= 10), yaxis(1) lcolor(gs8) mcolor(gs8) msymbol(circle)||
+>   scatter empdhi ttlaw if black==1 & everpro==0 & (ttlaw >= -10 & ttlaw <= 10), yaxis(2) msymbol(triangle_hollow) mcolor(black)||
+>   scatter empdhi ttlaw if black==0 & everpro==0 & (ttlaw >= -10 & ttlaw <= 10), yaxis(2) msymbol(circle_hollow) mcolor(gs8)||,
+>   legend(order(- "Left axis:" 1 2 - "Right axis:" 3 4) holes(2 6) label(1 "Blacks") label(2 "Whites") label(3 "Blacks") label(4 "Whites")) 
+>   ti("Employment in High Testing Industries: Anti-testing States")
+>   subti(" ")
+>   ytitle("ER relative to year zero, smoothed", axis(1))
+>   ytitle("Employment rate (ER)", axis(2))
+>   xtitle("Years to Law Implementation")
+>   saving("Output/rawplots_ttlaw_antiboth10", replace) ;
+(file Output/rawplots_ttlaw_antiboth10.gph saved)
+
+.     clear ;
+
+. 
+end of do-file
+
+. exit, clear
