@@ -76,4 +76,4 @@
     - Additional figures are created by **rawplots.do** and are contained in the /Output folder. These figures do not appear in the published paper. The /Original_Graphs folder contains the origin published graphs in .gph format.
 - **Figure 3**
   - **placebolaws.do** – Uses **marcps.dta** to produce the **placebo_results.dta** data set.
-    - **test_placebo_graph.do** – Produces **placebograph.gph** – Figure 3.
+    - **test_placebo_graph.do** – Produces **placebograph.gph** – Figure 3. Note that **placebograph.gph** is slightly different than the published Figure 3, **placebograph_published.gph**. The difference is likely because of changes to Stata's random number generator, and does not effect the conclusions made from the figure.
